@@ -19,7 +19,7 @@ export function initGame() {
       k.loadSprite(`character${i}`, `sprites/${i}.png`);
   }
 
-  const lapsToWin = 3;
+  const lapsToWin = 2;
   let gameOver = false;
   let winnerIndex = null;
 
@@ -115,6 +115,28 @@ const playerColorNames = [
           k.color(0, 0, 0),
           k.anchor("center")
       ])
+      
+      // Lap counter - overlapping bottom left corner
+      k.add([
+          k.rect(35, 25, { radius: 5 }),
+          k.pos(100 - 50 + 17.5, 100 + i * 150 + 50 - 12.5), // Bottom left corner overlap
+          k.anchor("center"),
+          k.color(255, 255, 255),
+          k.outline(2, k.BLACK),
+          k.z(20)
+      ]);
+      
+      k.add([
+          k.pos(100 - 50 + 17.5, 100 + i * 150 + 50 - 12.5),
+          k.text("0/2", {
+              size: 16,
+              font: "VT323"
+          }),
+          k.color(0, 0, 0),
+          k.anchor("center"),
+          k.z(21),
+          `lapCounter${i}`
+      ]);
       // position label
   }
   let rightFour = playerKeys.slice(4);
@@ -142,6 +164,28 @@ const playerColorNames = [
           }),
           k.color(0, 0, 0),
           k.anchor("center")
+      ]);
+      
+      // Lap counter - overlapping bottom left corner
+      k.add([
+          k.rect(35, 25, { radius: 5 }),
+          k.pos(k.width() - 100 - 50 + 17.5, 100 + i * 150 + 50 - 12.5), // Bottom left corner overlap
+          k.anchor("center"),
+          k.color(255, 255, 255),
+          k.outline(2, k.BLACK),
+          k.z(20)
+      ]);
+      
+      k.add([
+          k.pos(k.width() - 100 - 50 + 17.5, 100 + i * 150 + 50 - 12.5),
+          k.text("0/2", {
+              size: 16,
+              font: "VT323"
+          }),
+          k.color(0, 0, 0),
+          k.anchor("center"),
+          k.z(21),
+          `lapCounter${i + 4}`
       ]);
   }
 
@@ -237,37 +281,21 @@ const playerColorNames = [
       ]);
   })()
 
-  // Add finish line - vertical line at the start/finish position
-  const finishLineX = trackCenterX - straightLength / 2;
+  // Add finish line - vertical line at the start/finish position (moved slightly right)
+  const finishLineX = trackCenterX - straightLength / 2 + 5; // Moved 5 pixels to the right
   const finishLineTopY = trackCenterY - (turnRadius + (numPlayers - 1) * laneSpacing + laneSpacing);
   const finishLineBottomY = trackCenterY - turnRadius;
   const finishLineHeight = finishLineBottomY - finishLineTopY;
   
+  // Simple thin black finish line
   k.add([
-      k.rect(6, finishLineHeight),
+      k.rect(2, finishLineHeight),
       k.pos(finishLineX, finishLineTopY + finishLineHeight / 2),
       k.anchor("center"),
-      k.color(255, 255, 255),
-      k.z(15), // Above track but below players
+      k.color(0, 0, 0),
+      k.z(5), // Below players but above track
       "finishLine"
   ]);
-  
-  // Add checkered pattern to finish line
-  const checkerSize = 12;
-  const numCheckers = Math.floor(finishLineHeight / checkerSize);
-  for (let i = 0; i < numCheckers; i++) {
-      const isBlack = i % 2 === 0;
-      if (isBlack) {
-          k.add([
-              k.rect(6, checkerSize),
-              k.pos(finishLineX, finishLineTopY + i * checkerSize + checkerSize / 2),
-              k.anchor("center"),
-              k.color(0, 0, 0),
-              k.z(16), // Above the white finish line
-              "finishLineChecker"
-          ]);
-      }
-  }
 
   // Create lane data for player movement
   for (let i = 0; i < numPlayers; i++) {
@@ -483,6 +511,13 @@ const playerColorNames = [
           if (player.progress >= 1) {
               player.progress = 0;
               player.laps++;
+              
+              // Update lap counter display
+              const lapCounterObj = k.get(`lapCounter${i}`)[0];
+              if (lapCounterObj) {
+                  lapCounterObj.text = `${player.laps}/2`;
+              }
+              
               if (!gameOver && player.laps >= lapsToWin) {
                   endGame(i);
               }
