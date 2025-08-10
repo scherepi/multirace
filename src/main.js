@@ -4,8 +4,13 @@ import kaplay from "kaplay";
 const k = kaplay();
 
 k.loadRoot("./"); // A good idea for Itch.io publishing later
-k.loadSprite("bean", "sprites/bean.png");
+k.loadSprite("grass", "sprites/grass.png");
 k.loadFont("VT323", 'fonts/VT323-Regular.ttf');
+
+// Load individual character sprites
+for (let i = 1; i <= 8; i++) {
+    k.loadSprite(`character${i}`, `sprites/${i}.png`);
+}
 
 const numPlayers = 8;
 const trackCenterX = k.width() / 2;
@@ -31,12 +36,20 @@ for (let i = 0; i < numPlayers; i++) {
     playerKeys.push(availableKeys.splice(k.rand(availableKeys.length), 1));
 } 
 
-// Draw the track background first (green)
-k.add([
-    k.rect(k.width(), k.height()),
-    k.pos(0, 0),
-    k.color(0, 100, 0)
-]);
+// Draw the track background first with repeating grass texture
+const grassTileSize = 64; // Adjust this based on your grass.png size
+const numTilesX = Math.ceil(k.width() / grassTileSize);
+const numTilesY = Math.ceil(k.height() / grassTileSize);
+
+for (let x = 0; x < numTilesX; x++) {
+    for (let y = 0; y < numTilesY; y++) {
+        k.add([
+            k.sprite("grass"),
+            k.pos(x * grassTileSize, y * grassTileSize),
+            k.z(-10) // Behind everything
+        ]);
+    }
+}
 
 // create bubbles for each player
 
@@ -303,7 +316,7 @@ for (let i = 0; i < numPlayers; i++) {
     const startY = trackCenterY - lane.radius;
     
     const player = k.add([
-        k.sprite("bean"),
+        k.sprite(`character${i + 1}`), // Use character1.png through character8.png
         k.pos(startX, startY),
         k.scale(0.5),
         k.anchor("center"),
