@@ -13,6 +13,11 @@ const trackWidth = 300;
 const trackHeight = 200;
 const laneSpacing = 15;
 
+// Obstacle configuration
+const obstacleSpawnInterval = 0.4; // Time in seconds between obstacle spawns
+const obstacleMinDistance = 0.1; // Minimum distance ahead of player to spawn obstacle (0-1)
+const obstacleMaxDistance = 0.4; // Maximum distance ahead of player to spawn obstacle (0-1)
+
 // Player controls - each player gets a random key
 let availableKeys = ['a', 'c', 'k', 'p', 'e', 'v', 'b', 'o', 'h', 'g'];
 let playerKeys = [];
@@ -254,8 +259,8 @@ function spawnLitSection() {
     const randomLane = Math.floor(Math.random() * numPlayers);
     const player = players[randomLane];
     
-    // Spawn lit section in front of the player (0.1 to 0.4 ahead for more variety)
-    const distanceAhead = 0.1 + Math.random() * 0.3;
+    // Spawn lit section in front of the player using config variables
+    const distanceAhead = obstacleMinDistance + Math.random() * (obstacleMaxDistance - obstacleMinDistance);
     let spawnProgress = player.progress + distanceAhead;
     
     // Handle wrap-around
@@ -268,7 +273,7 @@ function spawnLitSection() {
 
 // Start spawning lit sections
 let spawnTimer = 0;
-const spawnInterval = 0.8; // Spawn every 0.8 seconds (more frequent)
+const spawnInterval = obstacleSpawnInterval; // Use config variable for spawn frequency
 
 // Create players
 const players = [];
