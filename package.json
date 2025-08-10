@@ -8,6 +8,7 @@
 		"zip": "npm run build && mkdir -p dist && zip -r dist/game.zip dist -x \"**/.DS_Store\""
 	},
 	"dependencies": {
+		"esbuild": "^0.25.8",
 		"kaplay": "^3001.0.19"
 	},
 	"devDependencies": {
