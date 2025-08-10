@@ -20,16 +20,41 @@ for (let i = 0; i < numPlayers; i++) {
     playerKeys.push(availableKeys.splice(k.rand(availableKeys.length), 1));
 } 
 
+// Draw the track background first (green)
+k.add([
+    k.rect(k.width(), k.height()),
+    k.pos(0, 0),
+    k.color(0, 100, 0)
+]);
+
 // create bubbles for each player
-let leftFour = playerKeys.splice(0, 4)
+
+let leftFour = playerKeys.slice(0, 4);
 for (let i = 0; i < leftFour.length; i++) {
     k.add([
         k.rect(100, 100, { radius: 20 }),
-        k.pos(40, 40 + i * 150),
+        k.pos(100, 100 + i * 150),
         k.rotate(0),
         k.anchor("center"),
         k.outline(4, BLACK),
-    ]);
+    ])
+    k.add([
+        k.pos(100, 100 + i * 150),
+        k.text(leftFour[i], {
+            size: 45,
+            font: "VT323"
+        })
+    ])
+}
+let rightFour = playerKeys.slice(4);
+for (let i = 0; i < rightFour.length; i++) {
+    k.add([
+        k.rect(100, 100, {radius: 20}),
+        k.pos(k.width() - 100, 100 + i * 150),
+        k.rotate(0),
+        k.anchor("center"),
+        k.outline(4, BLACK),
+    ])
 }
 
 console.log(playerKeys);
@@ -39,12 +64,7 @@ const lanes = [];
 const straightLength = trackWidth;
 const turnRadius = trackHeight / 2;
 
-// Draw the track background first (green)
-k.add([
-    k.rect(k.width(), k.height()),
-    k.pos(0, 0),
-    k.color(0, 100, 0)
-]);
+
 
 // Create track using rounded rectangles - draw one big white track
 const outerTrackWidth = straightLength + 2 * (turnRadius + (numPlayers - 1) * laneSpacing + laneSpacing);
