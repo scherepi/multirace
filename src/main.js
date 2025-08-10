@@ -560,10 +560,13 @@ const playerColorNames = [
       const contentDiv = document.createElement('div');
       contentDiv.style.cssText = 'text-align: center;';
       
-      const winnerColorName = playerColorNames[winnerIdx];
+      const winnerKey = Array.isArray(playerKeys[winnerIdx]) ? playerKeys[winnerIdx][0] : playerKeys[winnerIdx];
+      const winnerColor = playerColors[winnerIdx];
       
       contentDiv.innerHTML = `
-          <h1 style="font-size: 48px; margin: 20px 0; text-transform: uppercase;">${winnerColorName} wins!</h1>
+          <h1 style="font-size: 48px; margin: 20px 0; text-transform: uppercase;">
+              "<span style="color: ${winnerColor};">${winnerKey}</span>" wins!
+          </h1>
           <p style="font-size: 24px; margin: 20px 0;">Game Over</p>
           <button id="playAgainBtn" style="
               font-family: monospace;
