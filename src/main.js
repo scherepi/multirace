@@ -149,9 +149,10 @@ function createLitSection(laneIndex, startProgress) {
         lane: laneIndex,
         startProgress: startProgress,
         endProgress: startProgress + litSectionLength,
-        state: 'pink', // 'pink' -> 'red' -> removed
+        state: 'fadeIn', // 'fadeIn' -> 'flashing' -> removed
         timer: 0,
-        obj: null
+        obj: null,
+        flashTimer: 0
     };
     
     // Create visual representation
@@ -176,17 +177,42 @@ function updateLitSectionVisual(section) {
         const progress = section.startProgress + i * segmentLength;
         const pos = getTrackPosition(lane, progress);
         
-        const color = section.state === 'pink' ? [255, 192, 203] : [255, 0, 0];
+        let color, opacity;
+        
+        if (section.state === 'fadeIn') {
+            // Pink color that fades in over 2 seconds
+            color = [255, 192, 203];
+            opacity = Math.min(section.timer / 2.0, 1.0); // Fade in over 2 seconds
+        } else if (section.state === 'flashing') {
+            // Flash between red and orange
+            const flashSpeed = 8; // Flashes per second
+            const isRed = Math.floor(section.flashTimer * flashSpeed) % 2 === 0;
+            color = isRed ? [255, 0, 0] : [255, 165, 0]; // Red or Orange
+            opacity = 1.0;
+        }
         
         k.add([
             k.rect(8, 8),
             k.pos(pos.x, pos.y),
             k.anchor("center"),
             k.color(...color),
-            k.opacity(0.7),
+            k.opacity(opacity),
             k.z(5), // Render lit sections above track but below players
             `litSection_${section.lane}_${Math.floor(section.startProgress * 1000)}`
         ]);
+    }
+}
+
+// Update opacity of existing lit section (more efficient for fade-in)
+function updateLitSectionOpacity(section) {
+    const tag = `litSection_${section.lane}_${Math.floor(section.startProgress * 1000)}`;
+    const segments = k.get(tag);
+    
+    if (section.state === 'fadeIn') {
+        const opacity = Math.min(section.timer / 2.0, 1.0);
+        segments.forEach(segment => {
+            segment.opacity = opacity;
+        });
     }
 }
 
@@ -201,8 +227,8 @@ function spawnLitSection() {
     const randomLane = Math.floor(Math.random() * numPlayers);
     const player = players[randomLane];
     
-    // Spawn lit section closer in front of the player (0.05 to 0.15 ahead)
-    const distanceAhead = 0.05 + Math.random() * 0.10;
+    // Spawn lit section in front of the player (0.1 to 0.4 ahead for more variety)
+    const distanceAhead = 0.1 + Math.random() * 0.3;
     let spawnProgress = player.progress + distanceAhead;
     
     // Handle wrap-around
@@ -322,7 +348,7 @@ for (let i = 0; i < numPlayers; i++) {
 // Check if player collides with any red lit sections
 function checkLitSectionCollision(player) {
     for (const section of litSections) {
-        if (section.lane === player.lane && section.state === 'red') {
+        if (section.lane === player.lane && section.state === 'flashing') {
             // Check if player is within the lit section
             const playerProgress = player.progress;
             let sectionStart = section.startProgress;
@@ -369,15 +395,29 @@ k.onUpdate(() => {
         const section = litSections[i];
         section.timer += dt;
         
-        if (section.state === 'pink' && section.timer >= 1.0) {
-            // Change from pink to red
-            section.state = 'red';
-            section.timer = 0;
+        if (section.state === 'fadeIn') {
+            // Update opacity during fade-in (more efficient than recreating)
+            updateLitSectionOpacity(section);
+            
+            // After 2 seconds, change to flashing state
+            if (section.timer >= 2.0) {
+                section.state = 'flashing';
+                section.timer = 0;
+                section.flashTimer = 0;
+                // Only recreate visual when transitioning to flashing
+                updateLitSectionVisual(section);
+            }
+        } else if (section.state === 'flashing') {
+            section.flashTimer += dt;
+            
+            // Update visual for flashing effect
             updateLitSectionVisual(section);
-        } else if (section.state === 'red' && section.timer >= 1.0) {
-            // Remove the section
-            removeLitSectionVisual(section);
-            litSections.splice(i, 1);
+            
+            // After 2 seconds of flashing, remove the section
+            if (section.timer >= 2.0) {
+                removeLitSectionVisual(section);
+                litSections.splice(i, 1);
+            }
         }
     }
     
