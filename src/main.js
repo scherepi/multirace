@@ -13,12 +13,17 @@ const trackWidth = 300;
 const trackHeight = 200;
 const laneSpacing = 15;
 
-// Player controls - each player gets a key
-let availableKeys = ['A', 'C', 'K', 'P', 'E', 'V', 'B', 'O', 'H', 'G'];
+// Player controls - each player gets a random key
+let availableKeys = ['a', 'c', 'k', 'p', 'e', 'v', 'b', 'o', 'h', 'g'];
 let playerKeys = [];
 for (let i = 0; i < numPlayers; i++) {
     playerKeys.push(availableKeys.splice(k.rand(availableKeys.length), 1));
 } 
+
+// create bubbles for each player
+for (let i = 0; i < playerKeys.length; i++) {
+    
+}
 
 console.log(playerKeys);
 
