@@ -138,6 +138,85 @@ for (let i = 0; i < numPlayers; i++) {
     });
 }
 
+// Lit sections system
+const litSections = [];
+const litSectionLength = 0.08; // Length of each lit section as a fraction of total track
+
+// Create lit section objects
+function createLitSection(laneIndex, startProgress) {
+    const lane = lanes[laneIndex];
+    const section = {
+        lane: laneIndex,
+        startProgress: startProgress,
+        endProgress: startProgress + litSectionLength,
+        state: 'pink', // 'pink' -> 'red' -> removed
+        timer: 0,
+        obj: null
+    };
+    
+    // Create visual representation
+    updateLitSectionVisual(section);
+    litSections.push(section);
+    return section;
+}
+
+// Update the visual representation of a lit section
+function updateLitSectionVisual(section) {
+    // Remove old visual if it exists
+    if (section.obj) {
+        section.obj.destroy();
+    }
+    
+    const lane = lanes[section.lane];
+    const numSegments = 20; // Number of segments to approximate the curved section
+    const segmentLength = litSectionLength / numSegments;
+    
+    // Create multiple small rectangles to follow the track curve
+    for (let i = 0; i < numSegments; i++) {
+        const progress = section.startProgress + i * segmentLength;
+        const pos = getTrackPosition(lane, progress);
+        
+        const color = section.state === 'pink' ? [255, 192, 203] : [255, 0, 0];
+        
+        k.add([
+            k.rect(8, 8),
+            k.pos(pos.x, pos.y),
+            k.anchor("center"),
+            k.color(...color),
+            k.opacity(0.7),
+            k.z(5), // Render lit sections above track but below players
+            `litSection_${section.lane}_${Math.floor(section.startProgress * 1000)}`
+        ]);
+    }
+}
+
+// Remove lit section visual
+function removeLitSectionVisual(section) {
+    const tag = `litSection_${section.lane}_${Math.floor(section.startProgress * 1000)}`;
+    k.destroyAll(tag);
+}
+
+// Spawn new lit sections randomly
+function spawnLitSection() {
+    const randomLane = Math.floor(Math.random() * numPlayers);
+    const player = players[randomLane];
+    
+    // Spawn lit section closer in front of the player (0.05 to 0.15 ahead)
+    const distanceAhead = 0.05 + Math.random() * 0.10;
+    let spawnProgress = player.progress + distanceAhead;
+    
+    // Handle wrap-around
+    if (spawnProgress >= 1) {
+        spawnProgress -= 1;
+    }
+    
+    createLitSection(randomLane, spawnProgress);
+}
+
+// Start spawning lit sections
+let spawnTimer = 0;
+const spawnInterval = 0.8; // Spawn every 0.8 seconds (more frequent)
+
 // Create players
 const players = [];
 for (let i = 0; i < numPlayers; i++) {
@@ -152,6 +231,7 @@ for (let i = 0; i < numPlayers; i++) {
         k.scale(0.5),
         k.anchor("center"),
         k.area(),
+        k.z(10), // Render players on top of track elements
         "player"
     ]);
     
@@ -159,7 +239,9 @@ for (let i = 0; i < numPlayers; i++) {
         obj: player,
         lane: i,
         progress: 0, // Progress around the track (0 to 1)
-        laps: 0
+        laps: 0,
+        stunned: false,
+        stunTimer: 0
     });
 }
 
@@ -210,6 +292,12 @@ function getTrackPosition(lane, progress) {
 for (let i = 0; i < numPlayers; i++) {
     k.onKeyPress(playerKeys[i], () => {
         const player = players[i];
+        
+        // Check if player is stunned
+        if (player.stunned) {
+            return; // Can't move while stunned
+        }
+        
         const lane = lanes[player.lane];
         
         // Move player forward by a small amount
@@ -225,5 +313,82 @@ for (let i = 0; i < numPlayers; i++) {
         const position = getTrackPosition(lane, player.progress);
         player.obj.pos = k.vec2(position.x, position.y);
         player.obj.angle = position.angle * (180 / Math.PI);
+        
+        // Check collision with red lit sections
+        checkLitSectionCollision(player);
     });
 }
+
+// Check if player collides with any red lit sections
+function checkLitSectionCollision(player) {
+    for (const section of litSections) {
+        if (section.lane === player.lane && section.state === 'red') {
+            // Check if player is within the lit section
+            const playerProgress = player.progress;
+            let sectionStart = section.startProgress;
+            let sectionEnd = section.endProgress;
+            
+            // Handle wrap-around at the track boundary
+            if (sectionEnd > 1) {
+                if (playerProgress >= sectionStart || playerProgress <= (sectionEnd - 1)) {
+                    stunPlayer(player);
+                    break;
+                }
+            } else {
+                if (playerProgress >= sectionStart && playerProgress <= sectionEnd) {
+                    stunPlayer(player);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// Stun a player
+function stunPlayer(player) {
+    player.stunned = true;
+    player.stunTimer = 1.0; // 1 second stun
+    
+    // Visual feedback - make player flash red
+    player.obj.color = k.rgb(255, 100, 100);
+}
+
+// Update loop
+k.onUpdate(() => {
+    const dt = k.dt();
+    
+    // Update spawn timer
+    spawnTimer += dt;
+    if (spawnTimer >= spawnInterval) {
+        spawnLitSection();
+        spawnTimer = 0;
+    }
+    
+    // Update lit sections
+    for (let i = litSections.length - 1; i >= 0; i--) {
+        const section = litSections[i];
+        section.timer += dt;
+        
+        if (section.state === 'pink' && section.timer >= 1.0) {
+            // Change from pink to red
+            section.state = 'red';
+            section.timer = 0;
+            updateLitSectionVisual(section);
+        } else if (section.state === 'red' && section.timer >= 1.0) {
+            // Remove the section
+            removeLitSectionVisual(section);
+            litSections.splice(i, 1);
+        }
+    }
+    
+    // Update stunned players
+    for (const player of players) {
+        if (player.stunned) {
+            player.stunTimer -= dt;
+            if (player.stunTimer <= 0) {
+                player.stunned = false;
+                player.obj.color = k.rgb(255, 255, 255); // Reset to normal color
+            }
+        }
+    }
+});
