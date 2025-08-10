@@ -233,7 +233,7 @@ const playerColorNames = [
       k.rect(innerTrackWidth, innerTrackHeight, { radius: turnRadius }),
       k.pos(trackCenterX, trackCenterY),
       k.anchor("center"),
-      k.color(0, 100, 0)
+      k.color(k.Color.fromHex("#6abe30"))
   ]);
 
 
@@ -277,7 +277,7 @@ const playerColorNames = [
           k.rect(dividerTrackWidth - 2, dividerTrackHeight - 2, { radius: turnRadius + laneOffset }),
           k.pos(trackCenterX, trackCenterY),
           k.anchor("center"),
-          k.color(0, 100, 0)
+          k.color(k.Color.fromHex("#6abe30"))
       ]);
   })()
 
