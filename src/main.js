@@ -19,6 +19,11 @@ const obstacleSpawnInterval = 0.4; // Time in seconds between obstacle spawns
 const obstacleMinDistance = 0.1; // Minimum distance ahead of player to spawn obstacle (0-1)
 const obstacleMaxDistance = 0.4; // Maximum distance ahead of player to spawn obstacle (0-1)
 
+// Player knockback configuration
+const knockbackBaseDistance = 0.08; // Base distance to send player back (0-1 track progress)
+const knockbackVariation = 0.02; // Additional random variation (0-1 track progress)
+const knockbackAnimationTime = 0.3; // Time in seconds for smooth knockback animation
+
 // Player controls - each player gets a random key
 let availableKeys = ['a', 'c', 'k', 'p', 'e', 'v', 'b', 'o', 'h', 'g'];
 let playerKeys = [];
@@ -312,8 +317,12 @@ for (let i = 0; i < numPlayers; i++) {
         lane: i,
         progress: 0, // Progress around the track (0 to 1)
         laps: 0,
-        stunned: false,
-        stunTimer: 0
+        knockedBack: false,
+        knockbackTimer: 0,
+        knockbackStartProgress: 0,
+        knockbackEndProgress: 0,
+        stunnedByObstacle: null, // Reference to the obstacle that's stunning this player
+        waitingForKnockback: false // Flag to indicate player should be knocked back when obstacle disappears
     });
 }
 
@@ -365,9 +374,9 @@ for (let i = 0; i < numPlayers; i++) {
     k.onKeyPress(playerKeys[i], () => {
         const player = players[i];
         
-        // Check if player is stunned
-        if (player.stunned) {
-            return; // Can't move while stunned
+        // Check if player is being knocked back or stunned by obstacle
+        if (player.knockedBack || player.stunnedByObstacle) {
+            return; // Can't move while being knocked back or stunned
         }
         
         const lane = lanes[player.lane];
@@ -403,12 +412,12 @@ function checkLitSectionCollision(player) {
             // Handle wrap-around at the track boundary
             if (sectionEnd > 1) {
                 if (playerProgress >= sectionStart || playerProgress <= (sectionEnd - 1)) {
-                    stunPlayer(player);
+                    stunPlayerOnObstacle(player, section);
                     break;
                 }
             } else {
                 if (playerProgress >= sectionStart && playerProgress <= sectionEnd) {
-                    stunPlayer(player);
+                    stunPlayerOnObstacle(player, section);
                     break;
                 }
             }
@@ -416,13 +425,96 @@ function checkLitSectionCollision(player) {
     }
 }
 
-// Stun a player
-function stunPlayer(player) {
-    player.stunned = true;
-    player.stunTimer = 1.0; // 1 second stun
+// Check all players for collisions with flashing obstacles (called during update loop)
+function checkAllPlayersForCollisions() {
+    for (const player of players) {
+        // Skip players who are already being knocked back
+        if (!player.knockedBack && !player.stunnedByObstacle) {
+            checkLitSectionCollision(player);
+        }
+        
+        // Check if stunned players are still on their obstacle
+        if (player.stunnedByObstacle) {
+            checkIfPlayerStillOnObstacle(player);
+        }
+    }
+}
+
+// Check if a stunned player is still on their obstacle
+function checkIfPlayerStillOnObstacle(player) {
+    const section = player.stunnedByObstacle;
+    if (!section || section.state !== 'flashing') {
+        // Obstacle is gone or no longer dangerous
+        player.stunnedByObstacle = null;
+        player.waitingForKnockback = true;
+        return;
+    }
     
-    // Visual feedback - make player flash red
-    player.obj.color = k.rgb(255, 100, 100);
+    const playerProgress = player.progress;
+    let sectionStart = section.startProgress;
+    let sectionEnd = section.endProgress;
+    
+    let stillOnObstacle = false;
+    
+    // Handle wrap-around at the track boundary
+    if (sectionEnd > 1) {
+        if (playerProgress >= sectionStart || playerProgress <= (sectionEnd - 1)) {
+            stillOnObstacle = true;
+        }
+    } else {
+        if (playerProgress >= sectionStart && playerProgress <= sectionEnd) {
+            stillOnObstacle = true;
+        }
+    }
+    
+    if (!stillOnObstacle) {
+        // Player is no longer on the obstacle, unstun them
+        player.stunnedByObstacle = null;
+        player.waitingForKnockback = true;
+    }
+}
+
+// Stun a player when they're on an obstacle
+function stunPlayerOnObstacle(player, obstacleSection) {
+    // Don't stun if already stunned or being knocked back
+    if (player.stunnedByObstacle || player.knockedBack) {
+        return;
+    }
+    
+    player.stunnedByObstacle = obstacleSection;
+    player.waitingForKnockback = false;
+    
+    // Visual feedback - subtle red tint while stunned
+    player.obj.color = k.rgb(255, 240, 240);
+}
+
+// Knock back a player when they hit an obstacle
+function knockBackPlayer(player, obstacleSection) {
+    // Don't knock back if already being knocked back
+    if (player.knockedBack) {
+        return;
+    }
+    
+    player.knockedBack = true;
+    player.knockbackTimer = 0;
+    player.waitingForKnockback = false;
+    
+    // Calculate knockback distance (base + random variation)
+    const knockbackDistance = knockbackBaseDistance + Math.random() * knockbackVariation;
+    
+    // Set knockback to start of obstacle minus the knockback distance
+    let targetProgress = obstacleSection.startProgress - knockbackDistance;
+    
+    // Handle wrap-around - keep it simple, just clamp to 0
+    if (targetProgress < 0) {
+        targetProgress = 0;
+    }
+    
+    player.knockbackStartProgress = player.progress;
+    player.knockbackEndProgress = targetProgress;
+    
+    // Subtle red tint - much less intense than before
+    player.obj.color = k.rgb(255, 240, 240);
 }
 
 // Update loop
@@ -452,6 +544,8 @@ k.onUpdate(() => {
                 section.flashTimer = 0;
                 // Only recreate visual when transitioning to flashing
                 updateLitSectionVisual(section);
+                // Check if any players are already on this obstacle when it becomes active
+                checkAllPlayersForCollisions();
             }
         } else if (section.state === 'flashing') {
             section.flashTimer += dt;
@@ -461,20 +555,66 @@ k.onUpdate(() => {
             
             // After 2 seconds of flashing, remove the section
             if (section.timer >= 2.0) {
+                // Before removing, check if any players were stunned by this obstacle
+                for (const player of players) {
+                    if (player.stunnedByObstacle === section) {
+                        player.stunnedByObstacle = null;
+                        player.waitingForKnockback = true;
+                    }
+                }
+                
                 removeLitSectionVisual(section);
                 litSections.splice(i, 1);
             }
         }
     }
     
-    // Update stunned players
+    // Check for collisions every frame (catches cases where obstacles spawn on players)
+    checkAllPlayersForCollisions();
+    
+    // Update knocked back players
     for (const player of players) {
-        if (player.stunned) {
-            player.stunTimer -= dt;
-            if (player.stunTimer <= 0) {
-                player.stunned = false;
+        // Handle players waiting for knockback after being stunned
+        if (player.waitingForKnockback && !player.knockedBack && !player.stunnedByObstacle) {
+            // Create a dummy obstacle section for knockback calculation
+            const dummyObstacle = {
+                startProgress: player.progress + 0.05 // Knockback from slightly ahead of current position
+            };
+            knockBackPlayer(player, dummyObstacle);
+        }
+        
+        if (player.knockedBack) {
+            player.knockbackTimer += dt;
+            
+            // Calculate smooth interpolation progress (0 to 1)
+            const animationProgress = Math.min(player.knockbackTimer / knockbackAnimationTime, 1.0);
+            
+            // Use easing function for smoother animation (ease-out)
+            const easedProgress = 1 - Math.pow(1 - animationProgress, 3);
+            
+            // Simple linear interpolation - no wrap-around complexity
+            const currentProgress = player.knockbackStartProgress + 
+                (player.knockbackEndProgress - player.knockbackStartProgress) * easedProgress;
+            
+            player.progress = currentProgress;
+            
+            // Update player position
+            const lane = lanes[player.lane];
+            const position = getTrackPosition(lane, player.progress);
+            player.obj.pos = k.vec2(position.x, position.y);
+            player.obj.angle = position.angle * (180 / Math.PI);
+            
+            // End knockback animation
+            if (animationProgress >= 1.0) {
+                player.knockedBack = false;
                 player.obj.color = k.rgb(255, 255, 255); // Reset to normal color
             }
+        }
+        
+        // Update visual state for stunned players
+        if (player.stunnedByObstacle && !player.knockedBack) {
+            // Keep the red tint while stunned
+            player.obj.color = k.rgb(255, 240, 240);
         }
     }
 });
