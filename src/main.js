@@ -140,13 +140,6 @@ const playerColors = [
   const straightLength = trackWidth;
   const turnRadius = trackHeight / 2;
 
-  // Draw the track background first (green)
-  k.add([
-      k.rect(k.width(), k.height()),
-      k.pos(0, 0),
-      k.color(0, 100, 0)
-  ]);
-
   // Create track using rounded rectangles - draw one big white track
   const outerTrackWidth = straightLength + 2 * (turnRadius + (numPlayers - 1) * laneSpacing + laneSpacing);
   const outerTrackHeight = 2 * (turnRadius + (numPlayers - 1) * laneSpacing + laneSpacing);
