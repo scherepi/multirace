@@ -90,18 +90,6 @@ for (let i = numPlayers-1; i >= 0; i--) {
         k.anchor("center"),
         k.color(255, 255, 255)
     ]);
-    const player = k.add([
-        k.pos(25, 125 + i * laneWidth),
-        k.color(rand(rgb(255, 255, 255))),
-        k.circle(20)
-    ]);
-    laneAssignments.push({lane: lane, playerObject: player})
-
-    // Assign each player a key on the keyboard
-    keyAssignments.push(possibleKeys.splice(k.rand(possibleKeys.length), 1));
-    k.onKeyPress(keyAssignments[i], () => {
-        player.moveBy
-    })
 }
 
 // Create lane data for player movement
