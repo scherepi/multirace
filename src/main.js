@@ -5,6 +5,7 @@ const k = kaplay();
 
 k.loadRoot("./"); // A good idea for Itch.io publishing later
 k.loadSprite("bean", "sprites/bean.png");
+k.loadFont("VT323", 'fonts/VT323-Regular.ttf');
 
 const numPlayers = 8;
 const trackCenterX = k.width() / 2;
@@ -43,13 +44,17 @@ for (let i = 0; i < leftFour.length; i++) {
         k.anchor("center"),
         k.outline(4, BLACK),
     ])
+    // keycode label
     k.add([
         k.pos(100, 100 + i * 150),
         k.text(leftFour[i], {
             size: 45,
             font: "VT323"
-        })
+        }),
+        k.color(0, 0, 0),
+        k.anchor("center")
     ])
+    // position label
 }
 let rightFour = playerKeys.slice(4);
 for (let i = 0; i < rightFour.length; i++) {
@@ -59,7 +64,16 @@ for (let i = 0; i < rightFour.length; i++) {
         k.rotate(0),
         k.anchor("center"),
         k.outline(4, BLACK),
-    ])
+    ]);
+    k.add([
+        k.pos(k.width() - 100, 100 + i * 150),
+        k.text(rightFour[i], {
+            size: 45,
+            font: "VT323"
+        }),
+        k.color(0, 0, 0),
+        k.anchor("center")
+    ]);
 }
 
 console.log(playerKeys);
