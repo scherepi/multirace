@@ -195,15 +195,3 @@ for (let i = 0; i < numPlayers; i++) {
         player.obj.angle = position.angle * (180 / Math.PI);
     });
 }
-
-// Add instructions
-k.add([
-    k.text("Press keys 1-8 to move your horse!", {
-        size: 24,
-        font: "sans-serif"
-    }),
-    k.pos(20, 20),
-    k.color(255, 255, 255)
-]);
-
-k.onClick(() => k.addKaboom(k.mousePos()));
