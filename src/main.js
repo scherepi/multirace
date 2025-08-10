@@ -14,7 +14,13 @@ const trackHeight = 200;
 const laneSpacing = 15;
 
 // Player controls - each player gets a key
-const playerKeys = ['1', '2', '3', '4', '5', '6', '7', '8'];
+let availableKeys = ['A', 'C', 'K', 'P', 'E', 'V', 'B', 'O', 'H', 'G'];
+let playerKeys = [];
+for (let i = 0; i < numPlayers; i++) {
+    playerKeys.push(availableKeys.splice(k.rand(availableKeys.length), 1));
+} 
+
+console.log(playerKeys);
 
 // Create racing track lanes using rounded rectangles
 const lanes = [];
