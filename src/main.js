@@ -13,6 +13,9 @@ const laneWidth = 400 / numPlayers;
 k.setBackground(0, 0, 0);
 
 let laneAssignments = [];
+let keyAssignments = [];
+
+let possibleKeys = ['A', 'C', 'K', 'L', 'E', 'P', 'R', 'V', 'B', '4', 'X'];
 
 for (let i = 0; i < numPlayers; i++){
     const lane = k.add([
@@ -26,10 +29,13 @@ for (let i = 0; i < numPlayers; i++){
         k.color(rand(rgb(255, 255, 255))),
         k.circle(20)
     ]);
+    laneAssignments.push({lane: lane, playerObject: player})
+
+    // Assign each player a key on the keyboard
+    keyAssignments.push(possibleKeys.splice(k.rand(possibleKeys.length), 1));
+    k.onKeyPress(keyAssignments[i], () => {
+        player.moveBy
+    })
 }
 
-k.add([k.pos(120, 80), k.sprite("bean")]);
-
-const possibleKeys = ['A', 'C', 'K', 'L', 'E', 'P', 'R', 'V', 'B', '4', 'X'];
-
-const keyAssignments = [];
+console.log(laneAssignments);
