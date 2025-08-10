@@ -4,6 +4,41 @@
 <title>multirace</title>
 </head>
 <body style="overflow:hidden">
-<script src="src/main.js" type="module"></script>
-</body>
+    <div id="startscreen" style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:black; color:white; display:flex; justify-content:center; align-items:center; font-size:24px; font-family:monospace;">
+        <div id="startscreen-content" style="text-align:center;">
+            <h1>multirace</h1>
+            <p>press any key to start :)</p>
+        </div>
+    </div>
+    <script type="module">
+        import { initGame, enableInput, disableInput } from './src/main.js';
+        let hasStarted = false;
+        document.addEventListener('keydown', () => {
+          if (hasStarted) return;
+          hasStarted = true;
+
+          const screen = document.getElementById('startscreen');
+          const content = document.getElementById('startscreen-content');
+          initGame();
+          disableInput();
+          screen.style.backgroundColor = 'rgba(0,0,0,0.6)';
+          content.innerHTML = `
+            <p id=\"countdown\" style=\"font-size:64px; margin: 0;\">5</p>
+          `;
+
+          let remaining = 5;
+          const intervalId = setInterval(() => {
+            remaining -= 1;
+            if (remaining > 0) {
+              const el = document.getElementById('countdown');
+              if (el) el.textContent = String(remaining);
+            } else {
+              clearInterval(intervalId);
+              screen.style.display = 'none';
+              enableInput();
+            }
+          }, 1000);
+        });
+      </script>
+      </body>
 </html>
