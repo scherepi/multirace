@@ -62,6 +62,18 @@ export function initGame() {
       }
   }
 
+// Player colors
+const playerColors = [
+    "#d77bba", // Player 1 - Pink
+    "#5fcde4", // Player 2 - Light Blue
+    "#99e550", // Player 3 - Green
+    "#d95763", // Player 4 - Red
+    "#a966c3", // Player 5 - Purple
+    "#e1da49", // Player 6 - Yellow
+    "#df7126", // Player 7 - Orange
+    "#9badb7"  // Player 8 - Gray
+];
+
   // create bubbles for each player
 
   let leftFour = playerKeys.slice(0, 4);
@@ -73,6 +85,14 @@ export function initGame() {
           k.anchor("center"),
           k.outline(4, k.BLACK),
       ])
+    // Player color inner border
+    k.add([
+        k.rect(88, 88, { radius: 20 }),
+        k.pos(100, 100 + i * 150),
+        k.rotate(0),
+        k.anchor("center"),
+        k.outline(5, k.Color.fromHex(playerColors[i])),
+    ])
       // keycode label
       k.add([
           k.pos(100, 100 + i * 150),
@@ -94,6 +114,14 @@ export function initGame() {
           k.anchor("center"),
           k.outline(4, k.BLACK),
       ]);
+    // Player color inner border
+    k.add([
+        k.rect(88, 88, { radius: 20 }),
+        k.pos(k.width() - 100, 100 + i * 150),
+        k.rotate(0),
+        k.anchor("center"),
+        k.outline(5, k.Color.fromHex(playerColors[i + 4])),
+    ]);
       k.add([
           k.pos(k.width() - 100, 100 + i * 150),
           k.text(rightFour[i], {
