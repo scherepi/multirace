@@ -74,6 +74,18 @@ const playerColors = [
     "#9badb7"  // Player 8 - Gray
 ];
 
+// Color name mappings for victory screen
+const playerColorNames = [
+    "pink",     // Player 1
+    "blue",     // Player 2
+    "green",    // Player 3
+    "red",      // Player 4
+    "purple",   // Player 5
+    "yellow",   // Player 6
+    "orange",   // Player 7
+    "gray"      // Player 8
+];
+
   // create bubbles for each player
 
   let leftFour = playerKeys.slice(0, 4);
@@ -224,6 +236,38 @@ const playerColors = [
           k.color(0, 100, 0)
       ]);
   })()
+
+  // Add finish line - vertical line at the start/finish position
+  const finishLineX = trackCenterX - straightLength / 2;
+  const finishLineTopY = trackCenterY - (turnRadius + (numPlayers - 1) * laneSpacing + laneSpacing);
+  const finishLineBottomY = trackCenterY - turnRadius;
+  const finishLineHeight = finishLineBottomY - finishLineTopY;
+  
+  k.add([
+      k.rect(6, finishLineHeight),
+      k.pos(finishLineX, finishLineTopY + finishLineHeight / 2),
+      k.anchor("center"),
+      k.color(255, 255, 255),
+      k.z(15), // Above track but below players
+      "finishLine"
+  ]);
+  
+  // Add checkered pattern to finish line
+  const checkerSize = 12;
+  const numCheckers = Math.floor(finishLineHeight / checkerSize);
+  for (let i = 0; i < numCheckers; i++) {
+      const isBlack = i % 2 === 0;
+      if (isBlack) {
+          k.add([
+              k.rect(6, checkerSize),
+              k.pos(finishLineX, finishLineTopY + i * checkerSize + checkerSize / 2),
+              k.anchor("center"),
+              k.color(0, 0, 0),
+              k.z(16), // Above the white finish line
+              "finishLineChecker"
+          ]);
+      }
+  }
 
   // Create lane data for player movement
   for (let i = 0; i < numPlayers; i++) {
@@ -459,24 +503,64 @@ const playerColors = [
       gameOver = true;
       winnerIndex = winnerIdx;
 
-      k.add([
-          k.rect(k.width(), k.height()),
-          k.pos(0, 0),
-          k.color(0, 0, 0),
-          k.opacity(0.6),
-          k.z(200),
-          "winOverlayBg"
-      ]);
-      const winnerKey = Array.isArray(playerKeys[winnerIdx]) ? playerKeys[winnerIdx][0] : playerKeys[winnerIdx];
-      const message = `Player ${winnerIdx + 1} wins!`;
-      k.add([
-          k.text(message, { size: 32, align: "center" }),
-          k.pos(k.width() / 2, k.height() / 2),
-          k.anchor("center"),
-          k.color(255, 255, 255),
-          k.z(201),
-          "winOverlayText"
-      ]);
+      // Create game over overlay similar to title screen
+      const overlayDiv = document.createElement('div');
+      overlayDiv.id = 'gameOverScreen';
+      overlayDiv.style.cssText = `
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: black;
+          color: white;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-size: 24px;
+          font-family: monospace;
+          z-index: 1000;
+      `;
+
+      const contentDiv = document.createElement('div');
+      contentDiv.style.cssText = 'text-align: center;';
+      
+      const winnerColorName = playerColorNames[winnerIdx];
+      
+      contentDiv.innerHTML = `
+          <h1 style="font-size: 48px; margin: 20px 0; text-transform: uppercase;">${winnerColorName} wins!</h1>
+          <p style="font-size: 24px; margin: 20px 0;">Game Over</p>
+          <button id="playAgainBtn" style="
+              font-family: monospace;
+              font-size: 18px;
+              padding: 12px 24px;
+              background-color: transparent;
+              color: white;
+              border: 2px solid white;
+              cursor: pointer;
+              margin-top: 20px;
+              text-transform: uppercase;
+          ">Play Again</button>
+      `;
+
+      overlayDiv.appendChild(contentDiv);
+      document.body.appendChild(overlayDiv);
+
+      // Add hover effect to button
+      const playAgainBtn = document.getElementById('playAgainBtn');
+      playAgainBtn.addEventListener('mouseenter', () => {
+          playAgainBtn.style.backgroundColor = 'white';
+          playAgainBtn.style.color = 'black';
+      });
+      playAgainBtn.addEventListener('mouseleave', () => {
+          playAgainBtn.style.backgroundColor = 'transparent';
+          playAgainBtn.style.color = 'white';
+      });
+
+      // Handle play again click
+      playAgainBtn.addEventListener('click', () => {
+          location.reload(); // Simple page reload to restart the game
+      });
   }
 
   // Check if player collides with any red lit sections
