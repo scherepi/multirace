@@ -92,6 +92,27 @@ for (let i = numPlayers-1; i >= 0; i--) {
     ]);
 }
 
+(() => {
+    const laneOffset = 0;
+    const dividerTrackWidth = straightLength + 2 * (turnRadius + laneOffset);
+    const dividerTrackHeight = 2 * (turnRadius + laneOffset);
+
+    // green bit in the middle
+    k.add([
+        k.rect(dividerTrackWidth + 2, dividerTrackHeight + 2, { radius: turnRadius + laneOffset }),
+        k.pos(trackCenterX, trackCenterY),
+        k.anchor("center"),
+        k.color(0, 0, 0)
+    ]);
+
+    k.add([
+        k.rect(dividerTrackWidth - 2, dividerTrackHeight - 2, { radius: turnRadius + laneOffset }),
+        k.pos(trackCenterX, trackCenterY),
+        k.anchor("center"),
+        k.color(0, 100, 0)
+    ]);
+})()
+
 // Create lane data for player movement
 for (let i = 0; i < numPlayers; i++) {
     const laneOffset = i * laneSpacing;
