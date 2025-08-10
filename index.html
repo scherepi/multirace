@@ -4,7 +4,17 @@
 <title>horselapse</title>
 </head>
 <body style="overflow:hidden">
-    <div id="startscreen" style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:black; color:white; display:flex; justify-content:center; align-items:center; font-size:24px; font-family:monospace;">
+    <div id="startscreen" style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:black; color:white; display:flex; justify-content:center; align-items:center; font-size:24px; font-family:monospace; flex-direction:column;">
+        <div id="horses-container" style="display:flex; margin-bottom:30px; align-items:center;">
+            <img src="sprites/1.png" style="width:120px; height:120px; image-rendering:pixelated; margin-right:-50px; z-index:8;" alt="Horse 1">
+            <img src="sprites/2.png" style="width:120px; height:120px; image-rendering:pixelated; margin-right:-50px; z-index:7;" alt="Horse 2">
+            <img src="sprites/3.png" style="width:120px; height:120px; image-rendering:pixelated; margin-right:-50px; z-index:6;" alt="Horse 3">
+            <img src="sprites/4.png" style="width:120px; height:120px; image-rendering:pixelated; margin-right:-50px; z-index:5;" alt="Horse 4">
+            <img src="sprites/5.png" style="width:120px; height:120px; image-rendering:pixelated; margin-right:-50px; z-index:4;" alt="Horse 5">
+            <img src="sprites/6.png" style="width:120px; height:120px; image-rendering:pixelated; margin-right:-50px; z-index:3;" alt="Horse 6">
+            <img src="sprites/7.png" style="width:120px; height:120px; image-rendering:pixelated; margin-right:-50px; z-index:2;" alt="Horse 7">
+            <img src="sprites/8.png" style="width:120px; height:120px; image-rendering:pixelated; z-index:1;" alt="Horse 8">
+        </div>
         <div id="startscreen-content" style="text-align:center;">
             <h1>horselapse</h1>
             <p>press any key to start :)</p>
@@ -19,9 +29,12 @@
 
           const screen = document.getElementById('startscreen');
           const content = document.getElementById('startscreen-content');
+          const horsesContainer = document.getElementById('horses-container');
+          
           initGame();
           disableInput();
           screen.style.backgroundColor = 'rgba(0,0,0,0.6)';
+          horsesContainer.style.display = 'none'; // Hide the horses
           content.innerHTML = `
             <p id=\"countdown\" style=\"font-size:64px; margin: 0;\">5</p>
             <p style=\"font-size:18px; margin: 10px 0; color: #ccc;\">pick a key, it'll be your horse!</p>
